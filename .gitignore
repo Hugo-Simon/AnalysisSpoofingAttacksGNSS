@@ -12,3 +12,5 @@ gnss*txt
 *.24n
 *.bin
 *.h5
+*.fig
+*.pdf
