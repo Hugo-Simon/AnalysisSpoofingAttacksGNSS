@@ -40,19 +40,8 @@ python.exe spoofing_gnss_ml_dl.py -i trackData_gpsl1_19_merge_ml.csv
 
 ##### Varios
 
-# Linux
 # Creación del entorno virtual
-cd AnalysisSpoofingAttacksGNSS
-python3 -m venv venv
-# Activación del entorno virtual
-source venv/bin/activate
-# Actualización del pip 
-python3 -m pip install --upgrade pip
-# Instalación de las librerías Python necesarias
-python3 -m pip install -r requirements.txt
-
 # Windows
-# Creación del entorno virtual
 cd AnalysisSpoofingAttacksGNSS
 Set-ExecutionPolicy Unrestricted -Scope Process
 python.exe -m venv venv
@@ -63,10 +52,21 @@ python.exe -m pip install --upgrade pip
 # Instalación de las librerías Python necesarias
 pip install -r requirements.txt
 
+# Creación del entorno virtual
+# Linux
+cd AnalysisSpoofingAttacksGNSS
+python3 -m venv venv
+# Activación del entorno virtual
+source venv/bin/activate
+# Actualización del pip 
+python3 -m pip install --upgrade pip
+# Instalación de las librerías Python necesarias
+python3 -m pip install -r requirements.txt
+
+
 # Windows
 # Si ya está creado el entorno e instaladas las librerías instaladas para activar el proyecto hay que ejecutar 
-cd AnalysisSpoofingAttacksGNSS:w
-
+cd AnalysisSpoofingAttacksGNSS
 Set-ExecutionPolicy Unrestricted -Scope Process
 .\venv\Scripts\activate
 
