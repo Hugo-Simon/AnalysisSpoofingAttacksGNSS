@@ -90,7 +90,6 @@ def plot_confusion_matrix_percent(cm, labels=None, filename=None, normalize='tru
         plt.show()
 
 
-
 # Get the Data
 def load_data(filename):
     """Carga los datos desde el archivo CSV especificado."""
@@ -121,8 +120,8 @@ Ejemplos de uso:
     parser.add_argument(
         '-i', '--input',
         type=str,
-        default='datos_spoofing.csv',
-        help='Ruta al archivo CSV con los datos de entrada (default: datos_spoofing.csv)'
+        required=True,
+        help='Ruta al archivo CSV con los datos de entrada (obligatorio)'
     )
     # Add other arguments here as needed (e.g., model selection, output paths)
 
@@ -199,6 +198,48 @@ def run_gaussian_nb(X_train, y_train, X_test, y_test, cv, params=None, output_pr
     plot_confusion_matrix_percent(cm, labels=labels, filename=f"{output_prefix}.png")
 
     return score, gb_grid, y_pred, cm
+
+
+def run_decision_tree(X_train, y_train, X_test, y_test, cv, params=None, output_prefix='decision_tree'):
+    """Train and evaluate Decision Tree using GridSearchCV.
+
+    Returns: (score, best_estimator, y_pred, confusion_matrix)
+    """
+    if params is None:
+        params = {
+            'max_features': [1, 3, 10],
+            'min_samples_split': [2, 3, 10],
+            'min_samples_leaf': [1, 3, 10],
+            'criterion': ["entropy", "gini"]
+        }
+
+    dtc = DecisionTreeClassifier()
+    grid = GridSearchCV(dtc,
+                        param_grid=params,
+                        scoring='accuracy',
+                        n_jobs=-1,
+                        cv=cv,
+                        verbose=1)
+    grid.fit(X_train, y_train)
+
+    print('Best Score:', grid.best_score_)
+    print('Best Params:', grid.best_params_)
+    print('Best Estimator:', grid.best_estimator_)
+
+    dtc_grid = grid.best_estimator_
+    y_pred = dtc_grid.predict(X_test)
+    score = accuracy_score(y_test, y_pred) if (y_test is not None and len(y_test) > 0) else 0
+    print('Model Accuracy:', score)
+    print('Classification Report:\n', classification_report(y_test, y_pred))
+
+    cm = confusion_matrix(y_test, y_pred)
+    try:
+        labels = [str(x) for x in dtc_grid.classes_]
+    except Exception:
+        labels = None
+    plot_confusion_matrix_percent(cm, labels=labels, filename=f"{output_prefix}.png")
+
+    return score, dtc_grid, y_pred, cm
 
 
 # Function to apply balancing technique and print results
@@ -526,82 +567,24 @@ def model_training_evaluation():
 
     # ## **`5. Decision Tree Classifier`**
 
-    # Defining all the parameters
-    params = {
+    # Use helper to train and evaluate Decision Tree
+    dtc_grid_score, dtc_grid, y_pred, cm = run_decision_tree(X_train, y_train, X_test, y_test, cv=cv, params={
         'max_features': [1, 3, 10],
         'min_samples_split': [2, 3, 10],
         'min_samples_leaf': [1, 3, 10],
         'criterion': ["entropy", "gini"]
-    }
-
-    # Building model
-    dtc = DecisionTreeClassifier()
-
-    # Parameter estimating using GridSearch
-    grid = GridSearchCV(dtc,
-                        param_grid=params,
-                        scoring='accuracy',
-                        n_jobs =-1,
-                        cv=cv,
-                        verbose=1)
-
-    # Fitting the model
-    grid.fit(X_train, y_train)  # Cambiar X_rus_train por X_train
-
-    print('Best Score:', grid.best_score_)
-    print('Best Params:', grid.best_params_)
-    print('Best Estimator:', grid.best_estimator_)
-
-    dtc_grid= grid.best_estimator_
-    y_pred = dtc_grid.predict(X_test)
+    }, output_prefix='decision_tree')
 
 
     # ## **`6. Random Forest Classifier`**
 
-    # Defining all the parameters
     params = {
         'max_features': [3, 10],
-        # 'min_samples_split': [2, 3, 10],
         'min_samples_leaf': [3, 10],
-        # 'bootstrap': [False],
-        'n_estimators' :[100,300],
-        # 'criterion': ["entropy", "gini"]
+        'n_estimators': [100, 300]
     }
-    classes = [0,1, 2, 3]
-    # Building model
-    rfc = RandomForestClassifier()
 
-    # Parameter estimating using GridSearch
-    grid = GridSearchCV(rfc,
-                        param_grid=params,
-                        scoring='accuracy',
-                        n_jobs =-1,
-                        cv=cv,
-                        verbose=1)
-
-    # Fitting the model
-    grid.fit(X_train, y_train)  # Cambiar X_rus_train por X_train
-
-    print('Best Score:', grid.best_score_)
-    print('Best Params:', grid.best_params_)
-    print('Best Estimator:', grid.best_estimator_)
-
-    rfc_grid= grid.best_estimator_
-    y_pred = rfc_grid.predict(X_test)
-
-    rfc_grid_score = accuracy_score(y_test, y_pred)  # Cambiar y_rus_test por y_test
-    print('Model Accuracy:', rfc_grid_score)
-    print('Classification Report:\n', classification_report(y_test, y_pred))
-
-    # Confusion matrix of test set
-    cm = confusion_matrix(y_test, y_pred)
-    try:
-        labels = [str(x) for x in rfc_grid.classes_]
-    except Exception:
-        labels = None
-    plot_confusion_matrix_percent(cm, labels=labels, filename="random_forest.png")
-
-    # Replaced inline Random Forest block with helper
+    # Use helper to train and evaluate Random Forest
     rfc_grid_score, rfc_grid, y_pred, cm = run_random_forest(X_train, y_train, X_test, y_test, cv=cv, params=params, output_prefix='random_forest')
 
     # Defining all the parameters
@@ -783,17 +766,17 @@ if __name__ == '__main__':
     args = parse_arguments()
     # Support both `--file` (older) and `--input` (`-i`) argument names for backwards compatibility
     filename = getattr(args, 'file', None) or getattr(args, 'input', None)
-    # Robust fallback: if parsing failed or no filename provided, use default
+    # Enforce that filename is provided (argparse 'required' should handle this),
+    # but validate defensively in case args were modified programmatically.
     if filename is None:
-        print('Warning: no input filename provided; using default dataset filename')
-        filename = 'gnss_log_2025_11_22_17_18_54_spoofed_features.csv'
-    else:
-        # normalize path
-        try:
-            import os as _os
-            filename = _os.path.abspath(_os.path.expanduser(filename))
-        except Exception:
-            pass
+        print('Error: se requiere el argumento -i/--input con la ruta al CSV')
+        sys.exit(2)
+    # normalize path
+    try:
+        import os as _os
+        filename = _os.path.abspath(_os.path.expanduser(filename))
+    except Exception:
+        pass
 else:
     # Si se importa como módulo, usar el archivo por defecto
     filename = 'gnss_log_2025_11_22_17_18_54_spoofed_features.csv'
@@ -808,7 +791,10 @@ for col in df.columns:
 # Show the distribution of the target variable
 print(df['attack_type'].value_counts())
 
-corr_matrix = df.corr()
+# Exclude non-numeric and the target column 'attack_type' from correlation
+corr_df = df.drop(columns=['attack_type'], errors='ignore')
+corr_df = corr_df.select_dtypes(include=[np.number])
+corr_matrix = corr_df.corr()
 
 plt.figure(figsize=(12, 10))
 sns.heatmap(corr_matrix, annot=True, cmap='YlOrRd')
