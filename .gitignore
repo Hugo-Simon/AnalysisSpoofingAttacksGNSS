@@ -1,4 +1,4 @@
-gps_spoofing_env/
+venv/
 *.log
 *.csv
 __pycache__/
