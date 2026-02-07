@@ -1,8 +1,8 @@
-# GNSSGPS-Spoofing-Generation-and-Identification
-GNSSGPS Spoofing Generation and Identification
+
+# Analysis Spoofing Attacks GNSS
 
 - Descarga del proyecto
-git clone https://github.com/juliansimon/GNSSGPS-Spoofing-Generation-and-Identification.git
+git clone https://github.com/Hugo-Simon/AnalysisSpoofingAttacksGNSS.git
 
 # Descargar el Matlab y el proyecto FGI-GSRx
 # Sustituir el fichero doTracking.m por el nuestro
@@ -17,9 +17,9 @@ runGNSSSingleSatelliteTracking.bat
 cp XXX dsXXX/
 
 # Preparación de datos una vez descargados y procesados con Matlab
-cd GNSSGPS-Spoofing-Generation-and-Identification
+cd AnalysisSpoofingAttacksGNSS
 Set-ExecutionPolicy Unrestricted -Scope Process
-.\gps_spoofing_env\Scripts\activate
+.\venv\Scripts\activate
 
 # Elegimos el canal/satelite que nos interese por ejemplo el 19
 cd cleanStatic
@@ -32,8 +32,8 @@ cd ..
 python.exe .\merge_csv.py -o .\trackData_gpsl1_19_merge.csv .\cleanStatic\tracking_gpsl1_19_ml.csv .\ds3\tracking_gpsl1_19_ml.csv
 
 # En el script columnas_permitidas.py se seleccionan las características que nos interesan
-python.exe columnas_permitidas.py .\trackData_gpsl1_19_merge.csv
-python.exe ml_dl_test.py -i .\trackData_gpsl1_19_merge_ml.csv
+python.exe columnas_permitidas.py trackData_gpsl1_19_merge.csv
+python.exe spoofing_gnss_ml_dl.py -i trackData_gpsl1_19_merge_ml.csv
 
 # Los gráficos se crean en la carpeta donde se ejecuta
 
@@ -42,10 +42,10 @@ python.exe ml_dl_test.py -i .\trackData_gpsl1_19_merge_ml.csv
 
 # Linux
 # Creación del entorno virtual
-cd GNSSGPS-Spoofing-Generation-and-Identification
-python3 -m venv gps_spoofing_env
+cd AnalysisSpoofingAttacksGNSS
+python3 -m venv venv
 # Activación del entorno virtual
-source gps_spoofing_env/bin/activate
+source venv/bin/activate
 # Actualización del pip 
 python3 -m pip install --upgrade pip
 # Instalación de las librerías Python necesarias
@@ -53,11 +53,11 @@ python3 -m pip install -r requirements.txt
 
 # Windows
 # Creación del entorno virtual
-cd GNSSGPS-Spoofing-Generation-and-Identification
+cd AnalysisSpoofingAttacksGNSS
 Set-ExecutionPolicy Unrestricted -Scope Process
-python.exe -m venv gps_spoofing_env
+python.exe -m venv venv
 # Activación del entorno virtual
-.\gps_spoofing_env\Scripts\activate
+.\venv\Scripts\activate
 # Actualización del pip 
 python.exe -m pip install --upgrade pip
 # Instalación de las librerías Python necesarias
@@ -65,8 +65,9 @@ pip install -r requirements.txt
 
 # Windows
 # Si ya está creado el entorno e instaladas las librerías instaladas para activar el proyecto hay que ejecutar 
-cd GNSSGPS-Spoofing-Generation-and-Identification
+cd AnalysisSpoofingAttacksGNSS:w
+
 Set-ExecutionPolicy Unrestricted -Scope Process
-.\gps_spoofing_env\Scripts\activate
+.\venv\Scripts\activate
 
 

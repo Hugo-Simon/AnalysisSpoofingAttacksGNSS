@@ -1,0 +1,14 @@
+gps_spoofing_env/
+*.log
+*.csv
+__pycache__/
+*.pyc
+gnss*txt
+*.npy
+*.dat
+*.kml
+*.old
+*.png
+*.24n
+*.bin
+*.h5
