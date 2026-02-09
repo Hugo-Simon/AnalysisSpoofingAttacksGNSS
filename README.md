@@ -22,17 +22,13 @@ Set-ExecutionPolicy Unrestricted -Scope Process
 .\venv\Scripts\activate
 
 # Elegimos el canal/satelite que nos interese por ejemplo el 19
-cd cleanStatic
-python.exe ..\add_attack_type.py tracking_gpsl1_19.csv 0
+python.exe add_attack_type.py -o tracking_gpsl1_19_cleanStatic_ml.csv ..\Matlab\cleanStatic\tracking_gpsl1_19.csv 0
+python.exe add_attack_type.py -o tracking_gpsl1_19_ds1_ml.csv ..\Matlab\ds1\tracking_gpsl1_19.csv 1
 
-cd ../ds3
-python.exe ..\add_attack_type.py tracking_gpsl1_19.csv 1
-
-cd ..
-python.exe .\merge_csv.py -o .\trackData_gpsl1_19_merge.csv .\cleanStatic\tracking_gpsl1_19_ml.csv .\ds3\tracking_gpsl1_19_ml.csv
+python.exe merge_csv.py -o trackData_gpsl1_19_merge.csv tracking_gpsl1_19_cleanStatic_ml.csv tracking_gpsl1_19_ds1_ml.csv
 
 # En el script columnas_permitidas.py se seleccionan las características que nos interesan
-python.exe columnas_permitidas.py trackData_gpsl1_19_merge.csv
+python.exe columns_selection.py trackData_gpsl1_19_merge.csv
 python.exe spoofing_gnss_ml_dl.py -i trackData_gpsl1_19_merge_ml.csv
 
 # Los gráficos se crean en la carpeta donde se ejecuta
