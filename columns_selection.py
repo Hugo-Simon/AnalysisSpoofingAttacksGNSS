@@ -13,8 +13,8 @@ columnas_permitidas = [
     # Q (Quadrature, en cuadratura)
     # Si el seguimiento es bueno → I_P tiene valor alto (positivo o negativo)
     # Si hay pérdida de lock o spoofing/jamming → I_P cae, se vuelve ruidoso o errático
-    ##"I_P", 
-    ##"Q_P", 
+    "I_P", 
+    "Q_P", 
     "doppler", 
     # Indicador del estado de bloqueo del PLL (Phase-Locked Loop) del receptor GNSS.
     # Dice si el lazo de seguimiento de fase está “enganchado” (lock) o no a la portadora de la señal GPS.
@@ -24,8 +24,8 @@ columnas_permitidas = [
     # Demodular correctamente los bits de navegación. Mantener estable I_P y minimizar Q_P
     # 1 / true → PLL en lock
     # 0 / false → PLL fuera de lock
-    ##"pllLockIndicator",
-    ##"dllDiscr", 
+    "pllLockIndicator",
+    "dllDiscr", 
     #"carrFreq",
     "attack_type"
 ]
