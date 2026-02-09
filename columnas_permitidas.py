@@ -55,7 +55,7 @@ columnas_permitidas = [
     # 0 / false → PLL fuera de lock
     "pllLockIndicator",
     "dllDiscr", 
-    "carrFreq",
+    #"carrFreq",
     "attack_type"
 ]
 def filtra_columnas_csv(input_csv, columnas_permitidas):
