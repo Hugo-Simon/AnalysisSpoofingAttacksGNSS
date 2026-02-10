@@ -94,14 +94,11 @@ for loopCnt =  1:allSettings.sys.msToProcess % Loop over all epochs
                 trackResults.(signal) = GNSSTracking(allSettings.(signal),trackResults.(signal),channelNr); 
 
                 prn = trackResults.(signal).channel(channelNr).SvId.satId;
-                if printConsole
-                    disp(['PRN: ', int2str(prn)])
-                end
-
+                
                 % Mostrar siguiente elemento secuencial de varias variables por canal
                 try
                     chref = trackResults.(signal).channel(channelNr);
-                    vars = {'CN0fromSNR','I_P','Q_P','doppler', 'pllLockIndicator', 'dllDiscr', 'carrFreq'}; % variables a mostrar
+                    vars = {'CN0fromSNR','meanCN0fromSNR','I_P','Q_P','doppler', 'pllLockIndicator', 'dllDiscr', 'carrFreq'}; % variables a mostrar
                     outVals = cell(1,numel(vars));
                     for vi = 1:numel(vars)
                         varname = vars{vi};
@@ -128,15 +125,9 @@ for loopCnt =  1:allSettings.sys.msToProcess % Loop over all epochs
                                     end
                                     if isnumeric(raw) && isscalar(raw)
                                         val = double(raw);
-                                        if printConsole
-                                            fprintf('%s[%d]=%g ', varname, idx, val);
-                                        end
                                         outVals{vi} = val;
                                     elseif ischar(raw)
-                                        s = raw;
-                                        if printConsole
-                                            fprintf('%s[%d]=%s ', varname, idx, s);
-                                        end
+                                        s = raw;                                        
                                         outVals{vi} = s;
                                     else
                                         try
@@ -144,35 +135,18 @@ for loopCnt =  1:allSettings.sys.msToProcess % Loop over all epochs
                                         catch
                                             s = sprintf('<%s>', class(raw));
                                         end
-                                        if printConsole
-                                            fprintf('%s[%d]=%s ', varname, idx, s);
-                                        end
                                         outVals{vi} = s;
                                     end
                                 catch
-                                    if printConsole
-                                        fprintf('%s[%d]=<unprintable> ', varname, idx);
-                                    end
                                     outVals{vi} = '';
                                 end
                                 % Guardar índice incrementado en la estructura principal
                                 trackResults.(signal).channel(channelNr).(idx_field) = idx + 1;
                             else
-                                if printConsole
-                                    fprintf('%s[%d]=<waiting, available=%d> ', varname, idx, n);
-                                end
                                 outVals{vi} = '';
                             end
                         else
-                            if printConsole
-                                fprintf('%s=(no field) ', varname);
-                            end
                             outVals{vi} = '';
-                        end
-                        if vi == numel(vars)
-                            if printConsole
-                                fprintf('\n');
-                            end
                         end
                     end
                     % Volcar la fila al CSV si se abrió el fichero
@@ -201,7 +175,7 @@ for loopCnt =  1:allSettings.sys.msToProcess % Loop over all epochs
                                 else
                                     csvFidChannel{signalNr,chIdx} = fidcsv;
                                     if ftell(fidcsv) == 0
-                                        fprintf(fidcsv, 'svid,CN0fromSNR,I_P,Q_P,doppler,pllLockIndicator,dllDiscr,carrFreq\n'); % variables a mostrar
+                                        fprintf(fidcsv, 'svid,CN0fromSNR,meanCN0fromSNR,I_P,Q_P,doppler,pllLockIndicator,dllDiscr,carrFreq\n'); % variables a mostrar
                                     end
                                     csvRowWritten{signalNr,chIdx} = false;
                                 end
@@ -270,6 +244,10 @@ for loopCnt =  1:allSettings.sys.msToProcess % Loop over all epochs
 end % Loop over all epochs
 
 % Notify user tracking is over
-disp(['   Tracking is over (elapsed time ', datestr(now - trackStartTime, 13), ')']) 
+disp(['   Tracking is over (elapsed time ', datestr(now - trackStartTime, 13), ')']);
+if fidcsv ~= -1
+    fullPath = fullfile(pwd, csvFileNameCh);
+    disp(['CSV file path: ', fullPath]);
+end
 
 
