@@ -17,7 +17,7 @@ import os
 import sys
 
 
-def concat_with_csv(f1, f2, out):
+def concat_with_csv(f1, f2, out, skip=0):
     import csv
     # Read headers and write union
     with open(f1, newline='', encoding='utf-8') as a, open(f2, newline='', encoding='utf-8') as b:
@@ -43,10 +43,22 @@ def concat_with_csv(f1, f2, out):
         with open(out, 'w', newline='', encoding='utf-8') as fo:
             w = csv.writer(fo)
             w.writerow(headers)
+            # skip initial data rows for first file
+            for _ in range(skip):
+                try:
+                    next(ra)
+                except StopIteration:
+                    break
             # write rows from first
             for row in ra:
                 rowd = {k: v for k, v in zip(ha, row)}
                 w.writerow([rowd.get(h, '') for h in headers])
+            # skip initial data rows for second file
+            for _ in range(skip):
+                try:
+                    next(rb)
+                except StopIteration:
+                    break
             # write rows from second
             for row in rb:
                 rowd = {k: v for k, v in zip(hb, row)}
@@ -157,59 +169,59 @@ def main():
                 # fallback to csv
         # csv fallback
         try:
-            # If we need to trim, perform trim while concatenating
+                # If we need to trim, perform trim while concatenating
                 if minlen is not None and (len1 != len2):
-                import csv
-                # read headers
+                    import csv
+                    # read headers
                     with open(f1, newline='', encoding='utf-8') as a, open(f2, newline='', encoding='utf-8') as b:
-                    ra = csv.reader(a)
-                    rb = csv.reader(b)
-                    try:
-                        ha = next(ra)
-                    except StopIteration:
-                        ha = []
-                    try:
-                        hb = next(rb)
-                    except StopIteration:
-                        hb = []
-                    headers = []
-                    for h in ha:
-                        if h not in headers:
-                            headers.append(h)
-                    for h in hb:
-                        if h not in headers:
-                            headers.append(h)
-                    with open(out, 'w', newline='', encoding='utf-8') as fo:
-                        w = csv.writer(fo)
-                        w.writerow(headers)
-                        # skip first args.skip data rows (after header)
-                        for _ in range(args.skip):
-                            try:
-                                next(ra)
-                            except StopIteration:
-                                break
-                        # write up to minlen rows from first
-                        for i, row in enumerate(ra):
-                            if i >= minlen:
-                                break
-                            rowd = {k: v for k, v in zip(ha, row)}
-                            w.writerow([rowd.get(h, '') for h in headers])
-                        # skip first args.skip data rows for second
-                        for _ in range(args.skip):
-                            try:
-                                next(rb)
-                            except StopIteration:
-                                break
-                        # write up to minlen rows from second
-                        for i, row in enumerate(rb):
-                            if i >= minlen:
-                                break
-                            rowd = {k: v for k, v in zip(hb, row)}
-                            w.writerow([rowd.get(h, '') for h in headers])
-            else:
-                concat_with_csv(f1, f2, out, skip=args.skip)
-            print(f'Concatenated files to {out}')
-            return
+                        ra = csv.reader(a)
+                        rb = csv.reader(b)
+                        try:
+                            ha = next(ra)
+                        except StopIteration:
+                            ha = []
+                        try:
+                            hb = next(rb)
+                        except StopIteration:
+                            hb = []
+                        headers = []
+                        for h in ha:
+                            if h not in headers:
+                                headers.append(h)
+                        for h in hb:
+                            if h not in headers:
+                                headers.append(h)
+                        with open(out, 'w', newline='', encoding='utf-8') as fo:
+                            w = csv.writer(fo)
+                            w.writerow(headers)
+                            # skip first args.skip data rows (after header)
+                            for _ in range(args.skip):
+                                try:
+                                    next(ra)
+                                except StopIteration:
+                                    break
+                            # write up to minlen rows from first
+                            for i, row in enumerate(ra):
+                                if i >= minlen:
+                                    break
+                                rowd = {k: v for k, v in zip(ha, row)}
+                                w.writerow([rowd.get(h, '') for h in headers])
+                            # skip first args.skip data rows for second
+                            for _ in range(args.skip):
+                                try:
+                                    next(rb)
+                                except StopIteration:
+                                    break
+                            # write up to minlen rows from second
+                            for i, row in enumerate(rb):
+                                if i >= minlen:
+                                    break
+                                rowd = {k: v for k, v in zip(hb, row)}
+                                w.writerow([rowd.get(h, '') for h in headers])
+                else:
+                    concat_with_csv(f1, f2, out, skip=args.skip)
+                print(f'Concatenated files to {out}')
+                return
         except Exception as e:
             print(f'Error concatenating with csv fallback: {e}', file=sys.stderr); sys.exit(3)
 
