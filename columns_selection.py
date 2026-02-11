@@ -15,7 +15,7 @@ columnas_permitidas = [
     # Si hay pérdida de lock o spoofing/jamming → I_P cae, se vuelve ruidoso o errático
     "I_P", 
     "Q_P", 
-    "doppler", 
+    ##"doppler", 
     # Indicador del estado de bloqueo del PLL (Phase-Locked Loop) del receptor GNSS.
     # Dice si el lazo de seguimiento de fase está “enganchado” (lock) o no a la portadora de la señal GPS.
     # El PLL es el lazo que:

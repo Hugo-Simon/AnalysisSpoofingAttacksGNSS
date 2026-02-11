@@ -23,22 +23,32 @@ Set-ExecutionPolicy Unrestricted -Scope Process
 
 # Elegimos el canal/satelite que nos interese por ejemplo el 19
 python.exe add_attack_type.py -o tracking_gpsl1_19_cleanStatic_ml.csv ..\Matlab\cleanStatic\tracking_gpsl1_19.csv 0
-python.exe add_attack_type.py -o tracking_gpsl1_19_ds1_ml.csv ..\Matlab\ds1\tracking_gpsl1_19.csv 1
-python.exe merge_csv.py -o trackData_gpsl1_19_merge.csv tracking_gpsl1_19_cleanStatic_ml.csv tracking_gpsl1_19_ds1_ml.csv
-
-# Otro ejemplo
-python.exe add_attack_type.py -o tracking_gpsl1_16_cleanStatic_ml.csv ..\Matlab\cleanStatic\tracking_gpsl1_16.csv 0
-python.exe add_attack_type.py -o tracking_gpsl1_16_ds8_ml.csv ..\Matlab\ds8\tracking_gpsl1_16.csv 1
-python.exe merge_csv.py --skip 10000 -o trackData_gpsl1_16_merge.csv tracking_gpsl1_16_cleanStatic_ml.csv tracking_gpsl1_16_ds8_ml.csv
+python.exe add_attack_type.py -o tracking_gpsl1_ds1_19_ml.csv ..\Matlab\ds1\tracking_gpsl1_19.csv 1
+python.exe merge_csv.py -o trackData_gpsl1_ds1_19_merge.csv tracking_gpsl1_19_cleanStatic_ml.csv tracking_gpsl1_ds1_19_ml.csv
 
 # En el script columnas_permitidas.py se seleccionan las características que nos interesan
 # Los gráficos se crean en la carpeta donde se ejecuta
-python.exe columns_selection.py trackData_gpsl1_19_merge.csv
-python.exe spoofing_gnss_ml_dl.py -i trackData_gpsl1_19_merge_ml.csv
+python.exe columns_selection.py trackData_ds1_gpsl1_19_merge.csv
+python.exe spoofing_gnss_ml_dl.py -i trackData_gpsl1_ds1_19_merge_ml.csv
+
+# Otro ejemplo
+python.exe add_attack_type.py -o tracking_gpsl1_16_cleanStatic_ml.csv ..\Matlab\cleanStatic\tracking_gpsl1_16.csv 0
+python.exe add_attack_type.py -o tracking_gpsl1_ds8_16_ml.csv ..\Matlab\ds8\tracking_gpsl1_16.csv 1
+python.exe merge_csv.py --skip 10000 -o trackData_gpsl1_ds8_16_merge.csv tracking_gpsl1_16_cleanStatic_ml.csv tracking_gpsl1_ds8_16_ml.csv
+python.exe columns_selection.py trackData_gpsl1_ds8_16_merge.csv
+python.exe spoofing_gnss_ml_dl.py -i trackData_gpsl1_ds8_16_merge_ml.csv
+
+# Otro
+python.exe add_attack_type.py -o tracking_gpsl1_16_cleanStatic_ml.csv ..\Matlab\cleanStatic\tracking_gpsl1_16.csv 0
+python.exe add_attack_type.py -o tracking_gpsl1_ds3_16_ml.csv ..\Matlab\ds3\tracking_gpsl1_16.csv 1
+python.exe merge_csv.py -o trackData_gpsl1_ds3_16_merge.csv tracking_gpsl1_16_cleanStatic_ml.csv tracking_gpsl1_ds3_16_ml.csv
+python.exe columns_selection.py trackData_gpsl1_ds3_16_merge.csv
+python.exe spoofing_gnss_ml_dl.py -i trackData_gpsl1_ds3_16_merge_ml.csv
 
 # Extras
 python.exe spoofing_tracking_analysis.py trackData_gpsl1_19_merge_ml.csv
 python.exe plot_csv_column.py trackData_gpsl1_19_merge_ml.csv CN0fromSNR
+python.exe plot_csv_column.py trackData_gpsl1_ds3_19_merge.csv I_P
 
 ##### Varios
 
