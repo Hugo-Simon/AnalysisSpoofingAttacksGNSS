@@ -88,11 +88,34 @@ def main():
         print(f'Error: file not found: {f2}', file=sys.stderr); sys.exit(2)
 
     try:
+        import pandas as pd
         have_pd = True
     except Exception:
         have_pd = False
 
-    # Count rows and equalize lengths by trimming the longer file to the shorter
+    # Try to read both CSVs with pandas applying the skip so the first N rows
+    # are removed from both files before any counting/merging/concatenation.
+    df1 = None
+    df2 = None
+    have_pd_for_count = False
+    if have_pd:
+        try:
+            if args.skip > 0:
+                skiprows = range(1, 1 + args.skip)
+                df1 = pd.read_csv(f1, skiprows=skiprows)
+                df2 = pd.read_csv(f2, skiprows=skiprows)
+            else:
+                df1 = pd.read_csv(f1)
+                df2 = pd.read_csv(f2)
+            len1 = len(df1)
+            len2 = len(df2)
+            have_pd_for_count = True
+        except Exception:
+            df1 = None
+            df2 = None
+            have_pd_for_count = False
+
+    # Count rows using pandas or fallback if we couldn't pre-read dataframes
     def count_rows_pandas(path):
         # read with skiprows that preserves header (skip only data rows)
         if args.skip > 0:
@@ -109,31 +132,26 @@ def main():
             df = pd.read_csv(path)
         return df.iloc[:nrows]
 
-    try:
-        have_pd_for_count = True
-    except Exception:
-        have_pd_for_count = False
-
     def count_rows_fallback(path):
         # count data rows (excluding header) efficiently
         c = 0
         with open(path, 'rb') as fh:
             for i, _ in enumerate(fh):
                 c += 1
-        # subtract header line if file non-empty
-        # subtract header and skipped data rows
+        # subtract header line if file non-empty and skipped data rows
         return max(0, c - 1 - args.skip)
 
-    if have_pd_for_count:
-        try:
-            len1 = count_rows_pandas(f1)
-            len2 = count_rows_pandas(f2)
-        except Exception:
+    if not (have_pd and df1 is not None and df2 is not None):
+        if have_pd_for_count:
+            try:
+                len1 = count_rows_pandas(f1)
+                len2 = count_rows_pandas(f2)
+            except Exception:
+                len1 = count_rows_fallback(f1)
+                len2 = count_rows_fallback(f2)
+        else:
             len1 = count_rows_fallback(f1)
             len2 = count_rows_fallback(f2)
-    else:
-        len1 = count_rows_fallback(f1)
-        len2 = count_rows_fallback(f2)
 
     if len1 != len2:
         print(f'Row counts before equalize: {f1}={len1}, {f2}={len2}')
@@ -145,13 +163,15 @@ def main():
     if args.how == 'concat':
         if have_pd:
             try:
-                if args.skip > 0:
-                    skiprows = range(1, 1 + args.skip)
-                    df1 = pd.read_csv(f1, skiprows=skiprows)
-                    df2 = pd.read_csv(f2, skiprows=skiprows)
-                else:
-                    df1 = pd.read_csv(f1)
-                    df2 = pd.read_csv(f2)
+                # reuse pre-read dataframes if available
+                if df1 is None or df2 is None:
+                    if args.skip > 0:
+                        skiprows = range(1, 1 + args.skip)
+                        df1 = pd.read_csv(f1, skiprows=skiprows)
+                        df2 = pd.read_csv(f2, skiprows=skiprows)
+                    else:
+                        df1 = pd.read_csv(f1)
+                        df2 = pd.read_csv(f2)
                 # trim if necessary
                 if len(df1) > minlen:
                     df1 = df1.iloc[:minlen]
@@ -229,11 +249,13 @@ def main():
         try:
             if args.skip > 0:
                 skiprows = range(1, 1 + args.skip)
-                df1 = pd.read_csv(f1, skiprows=skiprows)
-                df2 = pd.read_csv(f2, skiprows=skiprows)
+                if df1 is None or df2 is None:
+                    df1 = pd.read_csv(f1, skiprows=skiprows)
+                    df2 = pd.read_csv(f2, skiprows=skiprows)
             else:
-                df1 = pd.read_csv(f1)
-                df2 = pd.read_csv(f2)
+                if df1 is None or df2 is None:
+                    df1 = pd.read_csv(f1)
+                    df2 = pd.read_csv(f2)
             # trim to equal lengths before merge if needed
             if len(df1) > minlen:
                 df1 = df1.iloc[:minlen]
