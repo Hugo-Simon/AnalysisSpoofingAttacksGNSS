@@ -62,6 +62,7 @@ def main():
     p.add_argument('--on', help='Column name to join on (required for merge)')
     p.add_argument('--join', choices=['inner','left','right','outer'], default='inner', help='Join type for merge')
     p.add_argument('--suffixes', default=(',_2'), help='Suffixes for overlapping columns, comma separated, e.g. "",_2"')
+    p.add_argument('--skip', type=int, default=0, help='Skip the first N data rows (after header) of each input file')
     args = p.parse_args()
 
     f1 = args.file1
@@ -82,11 +83,20 @@ def main():
     # Count rows and equalize lengths by trimming the longer file to the shorter
     def count_rows_pandas(path):
         import pandas as _pd
-        return len(_pd.read_csv(path))
+        # read with skiprows that preserves header (skip only data rows)
+        if args.skip > 0:
+            skiprows = range(1, 1 + args.skip)
+            return len(_pd.read_csv(path, skiprows=skiprows))
+        else:
+            return len(_pd.read_csv(path))
 
     def trim_with_pandas(path, nrows):
         import pandas as _pd
-        df = _pd.read_csv(path)
+        if args.skip > 0:
+            skiprows = range(1, 1 + args.skip)
+            df = _pd.read_csv(path, skiprows=skiprows)
+        else:
+            df = _pd.read_csv(path)
         return df.iloc[:nrows]
 
     try:
@@ -102,7 +112,8 @@ def main():
             for i, _ in enumerate(fh):
                 c += 1
         # subtract header line if file non-empty
-        return max(0, c - 1)
+        # subtract header and skipped data rows
+        return max(0, c - 1 - args.skip)
 
     if have_pd_for_count:
         try:
@@ -125,8 +136,13 @@ def main():
     if args.how == 'concat':
         if have_pd:
             try:
-                df1 = pd.read_csv(f1)
-                df2 = pd.read_csv(f2)
+                if args.skip > 0:
+                    skiprows = range(1, 1 + args.skip)
+                    df1 = pd.read_csv(f1, skiprows=skiprows)
+                    df2 = pd.read_csv(f2, skiprows=skiprows)
+                else:
+                    df1 = pd.read_csv(f1)
+                    df2 = pd.read_csv(f2)
                 # trim if necessary
                 if len(df1) > minlen:
                     df1 = df1.iloc[:minlen]
@@ -142,10 +158,10 @@ def main():
         # csv fallback
         try:
             # If we need to trim, perform trim while concatenating
-            if minlen is not None and (len1 != len2):
+                if minlen is not None and (len1 != len2):
                 import csv
                 # read headers
-                with open(f1, newline='', encoding='utf-8') as a, open(f2, newline='', encoding='utf-8') as b:
+                    with open(f1, newline='', encoding='utf-8') as a, open(f2, newline='', encoding='utf-8') as b:
                     ra = csv.reader(a)
                     rb = csv.reader(b)
                     try:
@@ -166,12 +182,24 @@ def main():
                     with open(out, 'w', newline='', encoding='utf-8') as fo:
                         w = csv.writer(fo)
                         w.writerow(headers)
+                        # skip first args.skip data rows (after header)
+                        for _ in range(args.skip):
+                            try:
+                                next(ra)
+                            except StopIteration:
+                                break
                         # write up to minlen rows from first
                         for i, row in enumerate(ra):
                             if i >= minlen:
                                 break
                             rowd = {k: v for k, v in zip(ha, row)}
                             w.writerow([rowd.get(h, '') for h in headers])
+                        # skip first args.skip data rows for second
+                        for _ in range(args.skip):
+                            try:
+                                next(rb)
+                            except StopIteration:
+                                break
                         # write up to minlen rows from second
                         for i, row in enumerate(rb):
                             if i >= minlen:
@@ -179,7 +207,7 @@ def main():
                             rowd = {k: v for k, v in zip(hb, row)}
                             w.writerow([rowd.get(h, '') for h in headers])
             else:
-                concat_with_csv(f1, f2, out)
+                concat_with_csv(f1, f2, out, skip=args.skip)
             print(f'Concatenated files to {out}')
             return
         except Exception as e:
@@ -191,8 +219,13 @@ def main():
         if not args.on:
             print('Error: --on is required for merge mode', file=sys.stderr); sys.exit(5)
         try:
-            df1 = pd.read_csv(f1)
-            df2 = pd.read_csv(f2)
+            if args.skip > 0:
+                skiprows = range(1, 1 + args.skip)
+                df1 = pd.read_csv(f1, skiprows=skiprows)
+                df2 = pd.read_csv(f2, skiprows=skiprows)
+            else:
+                df1 = pd.read_csv(f1)
+                df2 = pd.read_csv(f2)
             # trim to equal lengths before merge if needed
             if len(df1) > minlen:
                 df1 = df1.iloc[:minlen]

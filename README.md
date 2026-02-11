@@ -33,6 +33,9 @@ python.exe spoofing_gnss_ml_dl.py -i trackData_gpsl1_19_merge_ml.csv
 
 # Los gráficos se crean en la carpeta donde se ejecuta
 
+# Extras
+python.exe spoofing_tracking_analysis.py trackData_gpsl1_19_merge_ml.csv
+python.exe plot_csv_column.py trackData_gpsl1_19_merge_ml.csv CN0fromSNR
 
 ##### Varios
 
