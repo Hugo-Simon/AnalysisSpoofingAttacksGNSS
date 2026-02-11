@@ -1,9 +1,18 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
+import sys
 
 print("Cargando datos...")
-df = pd.read_csv("trackData_gpsl1_19_merge_ml.csv")
+
+# parsear argumento de fichero CSV (opcional)
+parser = argparse.ArgumentParser(description="Analiza tracking GNSS y detecta spoofing.")
+parser.add_argument("csv", nargs="?", default="trackData_gpsl1_19_merge_ml.csv",
+					help="Ruta al fichero CSV de tracking (por defecto: trackData_gpsl1_19_merge_ml.csv)")
+args = parser.parse_args()
+
+df = pd.read_csv(args.csv)
 
 # -------------------------------------------------
 
