@@ -15,10 +15,11 @@ we fall back to a csv-based concatenation that unions headers.
 import argparse
 import os
 import sys
+import csv
+import pandas as pd
 
 
 def concat_with_csv(f1, f2, out, skip=0):
-    import csv
     # Read headers and write union
     with open(f1, newline='', encoding='utf-8') as a, open(f2, newline='', encoding='utf-8') as b:
         ra = csv.reader(a)
@@ -87,32 +88,28 @@ def main():
         print(f'Error: file not found: {f2}', file=sys.stderr); sys.exit(2)
 
     try:
-        import pandas as pd
         have_pd = True
     except Exception:
         have_pd = False
 
     # Count rows and equalize lengths by trimming the longer file to the shorter
     def count_rows_pandas(path):
-        import pandas as _pd
         # read with skiprows that preserves header (skip only data rows)
         if args.skip > 0:
             skiprows = range(1, 1 + args.skip)
-            return len(_pd.read_csv(path, skiprows=skiprows))
+            return len(pd.read_csv(path, skiprows=skiprows))
         else:
-            return len(_pd.read_csv(path))
+            return len(pd.read_csv(path))
 
     def trim_with_pandas(path, nrows):
-        import pandas as _pd
         if args.skip > 0:
             skiprows = range(1, 1 + args.skip)
-            df = _pd.read_csv(path, skiprows=skiprows)
+            df = pd.read_csv(path, skiprows=skiprows)
         else:
-            df = _pd.read_csv(path)
+            df = pd.read_csv(path)
         return df.iloc[:nrows]
 
     try:
-        import pandas as _pd
         have_pd_for_count = True
     except Exception:
         have_pd_for_count = False
@@ -171,7 +168,6 @@ def main():
         try:
                 # If we need to trim, perform trim while concatenating
                 if minlen is not None and (len1 != len2):
-                    import csv
                     # read headers
                     with open(f1, newline='', encoding='utf-8') as a, open(f2, newline='', encoding='utf-8') as b:
                         ra = csv.reader(a)
