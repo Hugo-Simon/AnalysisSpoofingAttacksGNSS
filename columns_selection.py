@@ -35,7 +35,7 @@ columnas_permitidas = [
     # 1 / true → PLL en lock
     # 0 / false → PLL fuera de lock
 
-    # El Doppler de portadora mide los cambios de frecuencia de grano fino debido al movimiento relativo
+    # El Doppler de portadora mide los cambios de frecuencia de grano fino debido al movimiento relativo entre el receptor y el satélite. Es una medida de la velocidad radial entre ambos.
     "doppler", 
 
     "dllDiscr", 

@@ -46,8 +46,8 @@ python.exe columns_selection.py trackData_gpsl1_ds3_16_merge.csv
 python.exe spoofing_gnss_ml_dl.py -i trackData_gpsl1_ds3_16_merge_ml.csv --prefix ds3_16_
 
 # Extras
-python.exe plot_csv_column.py trackData_gpsl1_ds3_16_merge.csv CN0fromSNR
-python.exe plot_csv_column.py trackData_gpsl1_ds3_16_merge.csv I_P
+python.exe plot_csv_column.py trackData_gpsl1_ds3_16_merge.csv CN0fromSNR 
+python.exe plot_csv_column.py trackData_gpsl1_ds3_16_merge.csv I_P --ma 1000
 python.exe spoofing_tracking_analysis.py trackData_gpsl1_19_merge_ml.csv
 
 ##### Varios

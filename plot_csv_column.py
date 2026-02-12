@@ -2,7 +2,7 @@
 """plot_csv_column.py
 
 Usage:
-    python plot_csv_column.py input.csv column_name [--x x_column] [--kind line|hist|box|scatter] [--ma window] [-o out.png] [--no-show]
+  python plot_csv_column.py input.csv column_name [--x x_column] [--kind line|hist|box|scatter] [--ma window] [--samples-per-sec N] [-o out.png] [--no-show]
 
 Reads the CSV and plots `column_name`. If `--x` is provided, uses that column as x-axis. Saves to image file if `-o` given (default: input_column.png), otherwise shows the plot.
 
@@ -14,6 +14,7 @@ Requires: pandas, matplotlib
 import argparse
 import os
 import sys
+import numpy as np
 
 
 def main():
@@ -21,10 +22,11 @@ def main():
     p.add_argument('input', help='Input CSV file')
     p.add_argument('column', help='Column name to plot')
     p.add_argument('--x', dest='xcol', help='Optional column to use as x axis')
-    p.add_argument('--kind', choices=['line','hist','box','scatter'], default='line', help='Type of plot')
+    p.add_argument('--kind', choices=['line', 'hist', 'box', 'scatter'], default='line', help='Type of plot')
     p.add_argument('--group', help='Optional column name to group by (plots one series per distinct value). Default: attack_type', default=None)
     p.add_argument('--ma', type=int, default=None, help='Optional moving average window for line plots (positive integer)')
-    p.add_argument('-o','--output', help='Output image file (png, pdf, etc). Default: <input>_<column>.png')
+    p.add_argument('--samples-per-sec', type=int, default=500, help='Samples per second for x-axis scaling (default: 500)')
+    p.add_argument('-o', '--output', help='Output image file (png, pdf, etc). Default: <input>_<column>.png')
     p.add_argument('--no-show', dest='show', action='store_false', help='Do not show the plot interactively')
     p.add_argument('--title', help='Plot title')
     args = p.parse_args()
@@ -37,10 +39,14 @@ def main():
     show = args.show
     title = args.title
     ma_window = args.ma
+    samples_per_sec = args.samples_per_sec
 
     if ma_window is not None and ma_window <= 0:
         print('Error: --ma must be a positive integer.', file=sys.stderr)
         sys.exit(10)
+    if samples_per_sec is not None and samples_per_sec <= 0:
+        print('Error: --samples-per-sec must be a positive integer.', file=sys.stderr)
+        sys.exit(11)
 
     if not os.path.isfile(infile):
         print(f'Error: input file not found: {infile}', file=sys.stderr)
@@ -49,7 +55,7 @@ def main():
     # Try to import pandas and matplotlib
     try:
         import pandas as pd
-    except Exception as e:
+    except Exception:
         print('Error: pandas is required for this script.', file=sys.stderr)
         sys.exit(3)
     try:
@@ -80,7 +86,7 @@ def main():
     # Prepare output filename default
     if out is None:
         base, _ = os.path.splitext(os.path.basename(infile))
-        safe_col = col.replace(' ','_')
+        safe_col = col.replace(' ', '_')
         out = f"{base}_{safe_col}.png"
 
     plt.figure()
@@ -97,20 +103,25 @@ def main():
                 if ma_window:
                     y_vals = moving_average(y_vals, ma_window)
                 if xcol:
-                    plt.plot(group[xcol], y_vals, marker='.', linestyle='-', label=str(name))
+                    x_vals = group[xcol]
                 else:
-                    plt.plot(y_vals.reset_index(drop=True), marker='.', linestyle='-', label=str(name))
+                    x_vals = np.arange(len(y_vals))
+                if samples_per_sec:
+                    x_vals = x_vals / samples_per_sec
+                plt.plot(x_vals, y_vals, marker='.', linestyle='-', label=str(name))
             plt.legend()
         else:
             y_vals = df[col]
             if ma_window:
                 y_vals = moving_average(y_vals, ma_window)
             if xcol:
-                plt.plot(df[xcol], y_vals, marker='.', linestyle='-')
-                plt.xlabel(xcol)
+                x_vals = df[xcol]
             else:
-                plt.plot(y_vals, marker='.', linestyle='-')
-                plt.xlabel('index')
+                x_vals = np.arange(len(y_vals))
+            if samples_per_sec:
+                x_vals = x_vals / samples_per_sec
+            plt.plot(x_vals, y_vals, marker='.', linestyle='-')
+        plt.xlabel('seconds' if samples_per_sec else (xcol or 'index'))
         plt.ylabel(col)
     elif kind == 'hist':
         if group_col:
@@ -126,7 +137,7 @@ def main():
             data = [g[col].dropna().values for _, g in df.groupby(group_col)]
             labels = [str(name) for name, _ in df.groupby(group_col)]
             plt.boxplot(data)
-            plt.xticks(range(1, len(labels)+1), labels, rotation=45)
+            plt.xticks(range(1, len(labels) + 1), labels, rotation=45)
         else:
             plt.boxplot(df[col].dropna())
         plt.ylabel(col)
@@ -136,11 +147,17 @@ def main():
             sys.exit(8)
         if group_col:
             for name, group in df.groupby(group_col):
-                plt.scatter(group[xcol], group[col], s=10, label=str(name))
+                x_vals = group[xcol]
+                if samples_per_sec:
+                    x_vals = x_vals / samples_per_sec
+                plt.scatter(x_vals, group[col], s=10, label=str(name))
             plt.legend()
         else:
-            plt.scatter(df[xcol], df[col], s=10)
-        plt.xlabel(xcol)
+            x_vals = df[xcol]
+            if samples_per_sec:
+                x_vals = x_vals / samples_per_sec
+            plt.scatter(x_vals, df[col], s=10)
+        plt.xlabel('seconds' if samples_per_sec else xcol)
         plt.ylabel(col)
 
     plt.tight_layout()
@@ -156,6 +173,7 @@ def main():
             plt.show()
         except Exception as e:
             print(f'Warning showing plot interactively: {e}', file=sys.stderr)
+
 
 if __name__ == '__main__':
     main()
