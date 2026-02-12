@@ -38,7 +38,7 @@ columnas_permitidas = [
     # El Doppler de portadora mide los cambios de frecuencia de grano fino debido al movimiento relativo entre el receptor y el satélite. Es una medida de la velocidad radial entre ambos.
     "doppler", 
 
-    "dllDiscr", 
+    ###"dllDiscr", 
     #"carrFreq",
     "attack_type"
 ]

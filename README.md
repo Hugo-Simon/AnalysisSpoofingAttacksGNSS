@@ -45,9 +45,16 @@ python.exe merge_csv.py -o trackData_gpsl1_ds3_16_merge.csv tracking_gpsl1_16_cl
 python.exe columns_selection.py trackData_gpsl1_ds3_16_merge.csv
 python.exe spoofing_gnss_ml_dl.py -i trackData_gpsl1_ds3_16_merge_ml.csv --prefix ds3_16_
 
+# Ejemplo con pocos datos para que tarde menos tiempo
+python.exe add_attack_type.py -o tracking_gpsl1_16_cleanStatic_ml.csv ..\Matlab\cleanStatic\tracking_gpsl1_16.csv 0
+python.exe add_attack_type.py -o tracking_gpsl1_ds8_16_ml.csv ..\Matlab\ds8\tracking_gpsl1_16.csv 1
+python.exe merge_csv.py --skip 340000 -o trackData_gpsl1_ds8_16_merge.csv tracking_gpsl1_16_cleanStatic_ml.csv tracking_gpsl1_ds8_16_ml.csv
+python.exe columns_selection.py trackData_gpsl1_ds8_16_merge.csv
+python.exe spoofing_gnss_ml_dl.py -i trackData_gpsl1_ds8_16_merge_ml.csv --prefix ds8_16_mini_
+
 # Extras
 python.exe plot_csv_column.py trackData_gpsl1_ds3_16_merge.csv CN0fromSNR 
-python.exe plot_csv_column.py trackData_gpsl1_ds3_16_merge.csv I_P --ma 1000
+python.exe plot_csv_column.py trackData_gpsl1_ds3_16_merge.csv I_P --ma 4000
 python.exe spoofing_tracking_analysis.py trackData_gpsl1_19_merge_ml.csv
 
 ##### Varios
