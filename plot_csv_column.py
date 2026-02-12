@@ -96,6 +96,18 @@ def main():
     def moving_average(series, window):
         return series.rolling(window=window, min_periods=1).mean()
 
+    def format_group_label(value, group_name):
+        if group_name == 'attack_type':
+            try:
+                int_val = int(value)
+            except (TypeError, ValueError):
+                return str(value)
+            if int_val == 0:
+                return 'Clean'
+            if int_val == 1:
+                return 'Spoofed'
+        return str(value)
+
     if kind == 'line':
         if group_col:
             for name, group in df.groupby(group_col):
@@ -108,7 +120,7 @@ def main():
                     x_vals = np.arange(len(y_vals))
                 if samples_per_sec:
                     x_vals = x_vals / samples_per_sec
-                plt.plot(x_vals, y_vals, marker='.', linestyle='-', label=str(name))
+                plt.plot(x_vals, y_vals, marker='.', linestyle='-', label=format_group_label(name, group_col))
             plt.legend()
         else:
             y_vals = df[col]
@@ -126,7 +138,7 @@ def main():
     elif kind == 'hist':
         if group_col:
             for name, group in df.groupby(group_col):
-                plt.hist(group[col].dropna(), bins=50, alpha=0.5, label=str(name))
+                plt.hist(group[col].dropna(), bins=50, alpha=0.5, label=format_group_label(name, group_col))
             plt.legend()
         else:
             plt.hist(df[col].dropna(), bins=50)
@@ -135,7 +147,7 @@ def main():
     elif kind == 'box':
         if group_col:
             data = [g[col].dropna().values for _, g in df.groupby(group_col)]
-            labels = [str(name) for name, _ in df.groupby(group_col)]
+            labels = [format_group_label(name, group_col) for name, _ in df.groupby(group_col)]
             plt.boxplot(data)
             plt.xticks(range(1, len(labels) + 1), labels, rotation=45)
         else:
@@ -150,7 +162,7 @@ def main():
                 x_vals = group[xcol]
                 if samples_per_sec:
                     x_vals = x_vals / samples_per_sec
-                plt.scatter(x_vals, group[col], s=10, label=str(name))
+                plt.scatter(x_vals, group[col], s=10, label=format_group_label(name, group_col))
             plt.legend()
         else:
             x_vals = df[xcol]
