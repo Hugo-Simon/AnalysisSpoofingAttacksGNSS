@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import argparse
 import sys
+import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 from collections import Counter
@@ -41,6 +42,18 @@ import shap
 
 # Setting the numpy random seed
 np.random.seed(37)
+
+OUTPUT_PREFIX = ''
+
+
+def add_prefix(filename, prefix):
+    if not prefix:
+        return filename
+    root, ext = os.path.splitext(filename)
+    base = os.path.basename(root)
+    directory = os.path.dirname(root)
+    prefixed = f"{prefix}{base}"
+    return os.path.join(directory, f"{prefixed}{ext}")
 
 
 def plot_confusion_matrix_percent(cm, labels=None, filename=None, normalize='true', cmap='Blues'):
@@ -84,7 +97,7 @@ def plot_confusion_matrix_percent(cm, labels=None, filename=None, normalize='tru
     plt.title('Confusion Matrix (counts and %)' )
     plt.tight_layout()
     if filename:
-        plt.savefig(filename, dpi=300, bbox_inches='tight')
+        plt.savefig(add_prefix(filename, OUTPUT_PREFIX), dpi=300, bbox_inches='tight')
         plt.close()
     else:
         plt.show()
@@ -122,6 +135,12 @@ Ejemplos de uso:
         type=str,
         required=True,
         help='Ruta al archivo CSV con los datos de entrada (obligatorio)'
+    )
+    parser.add_argument(
+        '--prefix',
+        type=str,
+        default='',
+        help='Prefijo opcional para todos los ficheros de salida (ej: v1_)'
     )
     # Add other arguments here as needed (e.g., model selection, output paths)
 
@@ -404,7 +423,7 @@ def plot_class_distribution(y):
     plt.tight_layout()  # Adjust layout to fit labels better
 
     # Save the figure as a high-resolution image
-    plt.savefig("class_distribution.png", dpi=300, bbox_inches='tight')  # Save at 300 DPI
+    plt.savefig(add_prefix("class_distribution.png", OUTPUT_PREFIX), dpi=300, bbox_inches='tight')  # Save at 300 DPI
     # plt.show()
 
 # Function to plot total samples across different methods and save as high-res image
@@ -427,7 +446,7 @@ def plot_total_samples(original_count, ros_count, rus_count, smote_count):
     plt.tight_layout()  # Adjust layout to fit labels better
 
     # Save the figure as a high-resolution image
-    plt.savefig("total_samples_comparison.png", dpi=300, bbox_inches='tight')  # Save at 300 DPI
+    plt.savefig(add_prefix("total_samples_comparison.png", OUTPUT_PREFIX), dpi=300, bbox_inches='tight')  # Save at 300 DPI
     # plt.show()
 
 def model_training_evaluation():
@@ -630,7 +649,7 @@ def model_training_evaluation():
     plt.title('Feature Importance - Random Forest')
     plt.xlabel('Importancia')
     plt.tight_layout()
-    plt.savefig("feature_random_forest_feature_importance.png", dpi=300, bbox_inches='tight')  # Save at 300 DPI
+    plt.savefig(add_prefix("feature_random_forest_feature_importance.png", OUTPUT_PREFIX), dpi=300, bbox_inches='tight')  # Save at 300 DPI
     #plt.show()
 
     # Permutation importance
@@ -741,7 +760,7 @@ def model_training_evaluation():
 
         print("\nCaracterísticas más influyentes por predicción (Spoofing), valor absoluto:")
         print(influence_df.head(20))
-        influence_df.to_csv('most_influential_features_per_prediction.csv', index=False)
+        influence_df.to_csv(add_prefix('most_influential_features_per_prediction.csv', OUTPUT_PREFIX), index=False)
 
     except ImportError:
         print("⚠️ SHAP no instalado. Ejecuta: pip install shap")
@@ -764,6 +783,7 @@ def model_training_evaluation():
 if __name__ == '__main__':
     # Parsear argumentos de línea de comandos
     args = parse_arguments()
+    OUTPUT_PREFIX = args.prefix or ''
     # Support both `--file` (older) and `--input` (`-i`) argument names for backwards compatibility
     filename = getattr(args, 'file', None) or getattr(args, 'input', None)
     # Enforce that filename is provided (argparse 'required' should handle this),
@@ -801,7 +821,7 @@ sns.heatmap(corr_matrix, annot=True, cmap='YlOrRd')
 plt.title('Correlation Heatmap')
 plt.xticks(rotation=90)
 plt.yticks(rotation=0)
-plt.savefig("correlation_heatmap.png", dpi=300, bbox_inches='tight')  # Save at 300 DPI
+plt.savefig(add_prefix("correlation_heatmap.png", OUTPUT_PREFIX), dpi=300, bbox_inches='tight')  # Save at 300 DPI
 #plt.show()
 
 df.head()

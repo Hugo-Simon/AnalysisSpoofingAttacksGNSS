@@ -2,7 +2,7 @@
 """plot_csv_column.py
 
 Usage:
-  python plot_csv_column.py input.csv column_name [--x x_column] [--kind line|hist|box|scatter] [-o out.png] [--no-show]
+    python plot_csv_column.py input.csv column_name [--x x_column] [--kind line|hist|box|scatter] [--ma window] [-o out.png] [--no-show]
 
 Reads the CSV and plots `column_name`. If `--x` is provided, uses that column as x-axis. Saves to image file if `-o` given (default: input_column.png), otherwise shows the plot.
 
@@ -23,6 +23,7 @@ def main():
     p.add_argument('--x', dest='xcol', help='Optional column to use as x axis')
     p.add_argument('--kind', choices=['line','hist','box','scatter'], default='line', help='Type of plot')
     p.add_argument('--group', help='Optional column name to group by (plots one series per distinct value). Default: attack_type', default=None)
+    p.add_argument('--ma', type=int, default=None, help='Optional moving average window for line plots (positive integer)')
     p.add_argument('-o','--output', help='Output image file (png, pdf, etc). Default: <input>_<column>.png')
     p.add_argument('--no-show', dest='show', action='store_false', help='Do not show the plot interactively')
     p.add_argument('--title', help='Plot title')
@@ -35,6 +36,11 @@ def main():
     out = args.output
     show = args.show
     title = args.title
+    ma_window = args.ma
+
+    if ma_window is not None and ma_window <= 0:
+        print('Error: --ma must be a positive integer.', file=sys.stderr)
+        sys.exit(10)
 
     if not os.path.isfile(infile):
         print(f'Error: input file not found: {infile}', file=sys.stderr)
@@ -81,20 +87,29 @@ def main():
     if title:
         plt.title(title)
 
+    def moving_average(series, window):
+        return series.rolling(window=window, min_periods=1).mean()
+
     if kind == 'line':
         if group_col:
             for name, group in df.groupby(group_col):
+                y_vals = group[col]
+                if ma_window:
+                    y_vals = moving_average(y_vals, ma_window)
                 if xcol:
-                    plt.plot(group[xcol], group[col], marker='.', linestyle='-', label=str(name))
+                    plt.plot(group[xcol], y_vals, marker='.', linestyle='-', label=str(name))
                 else:
-                    plt.plot(group[col].reset_index(drop=True), marker='.', linestyle='-', label=str(name))
+                    plt.plot(y_vals.reset_index(drop=True), marker='.', linestyle='-', label=str(name))
             plt.legend()
         else:
+            y_vals = df[col]
+            if ma_window:
+                y_vals = moving_average(y_vals, ma_window)
             if xcol:
-                plt.plot(df[xcol], df[col], marker='.', linestyle='-')
+                plt.plot(df[xcol], y_vals, marker='.', linestyle='-')
                 plt.xlabel(xcol)
             else:
-                plt.plot(df[col], marker='.', linestyle='-')
+                plt.plot(y_vals, marker='.', linestyle='-')
                 plt.xlabel('index')
         plt.ylabel(col)
     elif kind == 'hist':

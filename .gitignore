@@ -14,3 +14,4 @@ gnss*txt
 *.h5
 *.fig
 *.pdf
+*.tmp
