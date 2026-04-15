@@ -1,0 +1,42 @@
+Para ejecutar Matlab
+D:\Programas\MATLAB\R2025b\bin\Matlab.exe
+
+Crear nuevo proyecto o cargar uno ya existente
+D:\Proyectos\Matlab\Matlab.prj
+
+Si el proyecto no tiene el modulo FGI-GSRx hay que cargalo
+
+addpath(genpath('D:\Proyectos\FGI-GSRx'));
+savepath;
+
+Para cargar la configuración en el proyecto
+Hay que copiar en la carpeta del proyecto el FGI-GSRx  
+Con el comando gsrx se cargan las configuraciones 
+params/default_param_TEXBAT_GPSL1.txt
+
+Para procesar el escenario ds3 en el Matlab con FGI-GSRx se utiliza el fichero
+complete_Texbat_Dataset-ds3_GPS_L1_CA.txt que hay que configurar con los parámetros que nos interesa
+
+Ejecutar
+gsrx('D:\Proyectos\TFG-Hugo\Matlab.old\complete_Texbat_Dataset-ds3_GPS_L1_CA.txt')
+
+Para ejecutar con debug tienes que ir al fichero donde quieras poner el debug y darle a run para que te permita añadirlo al path
+addpath(genpath('D:\Proyectos\FGI-GSRx\track\doTraking.m'));
+Si queremos ver las variables hay que ir a layout y seleccionar workspace
+
+Para que entre en el doTracking.m la opción sys,saveDataFile tiene que estar a false
+
+En Python
+Para añadir la columna a predecir
+python ../GNSSGPS-Spoofing/add_attack_type.py "tracking_gpsl1_19.csv" 0
+
+python ../GNSSGPS-Spoofing/add_attack_type.py "tracking_gpsl1_19.csv" 1
+
+python merge_csv.py file1.csv file2.csv -o out.csv 
+
+
+Varios
+En matlab
+En la carpeta D:\Proyectos\FGI-GSRx\Ejemplos están los script de carga, hay que personalizarlos.
+
+

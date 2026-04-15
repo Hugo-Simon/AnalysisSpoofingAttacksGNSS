@@ -83,6 +83,8 @@ def main():
         print(f'Error: group column "{group_col}" not found in CSV. Available columns: {list(df.columns)}', file=sys.stderr)
         sys.exit(9)
 
+    has_misclassified = 'misclassified' in df.columns
+
     # Prepare output filename default
     if out is None:
         base, _ = os.path.splitext(os.path.basename(infile))
@@ -121,6 +123,21 @@ def main():
                 if samples_per_sec:
                     x_vals = x_vals / samples_per_sec
                 plt.plot(x_vals, y_vals, marker='.', linestyle='-', label=format_group_label(name, group_col))
+            # Resaltar muestras mal clasificadas (si existe la columna)
+            if has_misclassified:
+                mis_mask = df['misclassified'] != 0
+                if mis_mask.any():
+                    y_all = df[col]
+                    if ma_window:
+                        y_all = moving_average(y_all, ma_window)
+                    if xcol:
+                        x_all = df[xcol]
+                    else:
+                        x_all = np.arange(len(y_all))
+                        x_all = pd.Series(x_all, index=y_all.index)
+                    if samples_per_sec:
+                        x_all = x_all / samples_per_sec
+                    plt.scatter(x_all[mis_mask], y_all[mis_mask], s=25, c='red', marker='o', label='Misclassified')
             plt.legend()
         else:
             y_vals = df[col]
@@ -130,9 +147,16 @@ def main():
                 x_vals = df[xcol]
             else:
                 x_vals = np.arange(len(y_vals))
+                x_vals = pd.Series(x_vals, index=y_vals.index)
             if samples_per_sec:
                 x_vals = x_vals / samples_per_sec
             plt.plot(x_vals, y_vals, marker='.', linestyle='-')
+            # Resaltar muestras mal clasificadas (si existe la columna)
+            if has_misclassified:
+                mis_mask = df['misclassified'] != 0
+                if mis_mask.any():
+                    plt.scatter(x_vals[mis_mask], y_vals[mis_mask], s=25, c='red', marker='o', label='Misclassified')
+                    plt.legend()
         plt.xlabel('seconds' if samples_per_sec else (xcol or 'index'))
         plt.ylabel(col)
     elif kind == 'hist':
@@ -163,12 +187,30 @@ def main():
                 if samples_per_sec:
                     x_vals = x_vals / samples_per_sec
                 plt.scatter(x_vals, group[col], s=10, label=format_group_label(name, group_col))
+            # Resaltar muestras mal clasificadas (si existe la columna)
+            if has_misclassified:
+                mis_mask = df['misclassified'] != 0
+                if mis_mask.any():
+                    x_all = df[xcol]
+                    if samples_per_sec:
+                        x_all = x_all / samples_per_sec
+                    y_all = df[col]
+                    plt.scatter(x_all[mis_mask], y_all[mis_mask], s=25, c='red', marker='o', label='Misclassified')
             plt.legend()
         else:
             x_vals = df[xcol]
             if samples_per_sec:
                 x_vals = x_vals / samples_per_sec
-            plt.scatter(x_vals, df[col], s=10)
+            if has_misclassified:
+                mis_mask = df['misclassified'] != 0
+                if mis_mask.any():
+                    plt.scatter(x_vals[~mis_mask], df[col][~mis_mask], s=10, label='Correct')
+                    plt.scatter(x_vals[mis_mask], df[col][mis_mask], s=25, c='red', marker='o', label='Misclassified')
+                    plt.legend()
+                else:
+                    plt.scatter(x_vals, df[col], s=10)
+            else:
+                plt.scatter(x_vals, df[col], s=10)
         plt.xlabel('seconds' if samples_per_sec else xcol)
         plt.ylabel(col)
 
