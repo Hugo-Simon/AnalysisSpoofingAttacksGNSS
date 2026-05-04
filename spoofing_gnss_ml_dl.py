@@ -29,7 +29,7 @@ from imblearn.over_sampling import RandomOverSampler, SMOTE
 
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
 from tensorflow.keras.utils import to_categorical
 from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
 
@@ -365,9 +365,11 @@ def run_deep_learning(X_train, y_train, X_test, y_test, epochs=30, batch_size=32
 
     model = Sequential([
         Dense(128, activation='relu', input_shape=(input_dim,)),
-        Dropout(0.3),
+        BatchNormalization(),
+        Dropout(0.5),
         Dense(64, activation='relu'),
-        Dropout(0.2),
+        BatchNormalization(),
+        Dropout(0.4),
         Dense(num_classes, activation='softmax')
     ])
 
