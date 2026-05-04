@@ -1,9 +1,6 @@
 # Data 
 # https://ieee-dataport.org/documents/dataset-gps-spoofing-detection-autonomous-vehicles
 
-""" Dudas sobre las carácterísticas que otros han utilizado para entrenar los modelos ML/DL de detección de spoofing GPS.
-    Si se entrena con las posiciones de una ruta cuando se haga otra ruta distinta la detectará como spoofing"""
-
 import numpy as np
 import pandas as pd
 import argparse
@@ -571,7 +568,7 @@ def model_training_evaluation():
 
     # ## **`2. K-Nearest Neighbor (KNN)`**
     params = {
-        'n_neighbors': [9,11,13,15,16,17],
+        'n_neighbors': [9,11,13,15,17,19],
         'weights': ['uniform','distance']}
 
     knn_grid_score, knn_grid, y_pred, cm = run_knn(X_train, y_train, X_test, y_test, cv=cv, params=params, output_prefix='knn')
@@ -608,7 +605,8 @@ def model_training_evaluation():
 
     # Defining all the parameters
     params = {
-        'max_depth': range (2, 10, 1),
+        ####'max_depth': range (2, 10, 1),
+        'max_depth': range (2, 14, 1),  # 14 numero de ramas
         'n_estimators': range(60, 220, 40),
         'learning_rate': [0.1, 0.01, 0.05]
     }

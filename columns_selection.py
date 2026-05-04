@@ -25,7 +25,7 @@ columnas_permitidas = [
     # El valor de correlación de cuadratura y refleja el componente de ruido ortogonal a la señal.
     "Q_P", 
 
-    #"pllLockIndicator",
+    "pllLockIndicator",
     # Indicador del estado de bloqueo del PLL (Phase-Locked Loop) del receptor GNSS.
     # Dice si el lazo de seguimiento de fase está “enganchado” (lock) o no a la portadora de la señal GPS.
     # El PLL es el lazo que:
@@ -36,9 +36,9 @@ columnas_permitidas = [
     # 0 / false → PLL fuera de lock
 
     # El Doppler de portadora mide los cambios de frecuencia de grano fino debido al movimiento relativo entre el receptor y el satélite. Es una medida de la velocidad radial entre ambos.
-    #"doppler", 
+    "doppler", 
 
-    ###"dllDiscr", 
+    "dllDiscr", 
     #"carrFreq",
     "attack_type"
 ]
