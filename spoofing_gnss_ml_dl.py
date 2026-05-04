@@ -606,15 +606,15 @@ def model_training_evaluation():
     # ANÁLISIS DE IMPORTANCIA DE CARACTERÍSTICAS
     # ===============================================
 
-    # Feature importance para Random Forest
+    # Feature importance para XGBoost
     print("\n" + "="*50)
-    print("ANÁLISIS DE IMPORTANCIA - RANDOM FOREST")
+    print("ANÁLISIS DE IMPORTANCIA - XGBOOST")
     print("="*50)
 
     feature_names = X.columns.tolist()
     importance_df = pd.DataFrame({
         'feature': feature_names,
-        'importance': rfc_grid.feature_importances_
+        'importance': xgb_grid.feature_importances_
     }).sort_values('importance', ascending=False)
 
     print("Top 5 características más importantes:")
@@ -623,10 +623,10 @@ def model_training_evaluation():
     # Visualizar
     plt.figure(figsize=(10, 6))
     sns.barplot(data=importance_df.head(8), x='importance', y='feature', palette='viridis')
-    plt.title('Feature Importance - Random Forest')
+    plt.title('Feature Importance - XGBoost')
     plt.xlabel('Importancia')
     plt.tight_layout()
-    plt.savefig(add_prefix("feature_random_forest_feature_importance.png", OUTPUT_PREFIX), dpi=300, bbox_inches='tight')  # Save at 300 DPI
+    plt.savefig(add_prefix("feature_xgboost_feature_importance.png", OUTPUT_PREFIX), dpi=300, bbox_inches='tight')  # Save at 300 DPI
     #plt.show()
 
     # Permutation importance
@@ -634,7 +634,7 @@ def model_training_evaluation():
     print("\n🔄 Calculando Permutation Importance...")
     # Use the actual test split used above (no balancing variables)
     perm_importance = permutation_importance(
-        rfc_grid, X_test, y_test, n_repeats=10, random_state=42, n_jobs=-1
+        xgb_grid, X_test, y_test, n_repeats=10, random_state=42, n_jobs=-1
     )
 
     perm_df = pd.DataFrame({
@@ -651,7 +651,7 @@ def model_training_evaluation():
         print("\n🎯 Calculando valores SHAP...")
 
         # Crear explainer (TreeExplainer para modelos de árbol)
-        explainer = shap.TreeExplainer(rfc_grid)
+        explainer = shap.TreeExplainer(xgb_grid)
 
         # Calcular SHAP para una muestra (computacionalmente costoso)
         sample_size = min(200, X_test.shape[0])
@@ -662,13 +662,13 @@ def model_training_evaluation():
         shap_values = explainer.shap_values(X_sample)
 
         # Build per-sample shap vector for the predicted class (robust to label ordering)
-        predictions = rfc_grid.predict(X_sample.values)
+        predictions = xgb_grid.predict(X_sample.values)
 
         # shap_values can be a list (one array per class) or a single array
         shap_per_sample = []
         if isinstance(shap_values, list):
-            # map class label to index in rfc_grid.classes_
-            class_to_index = {int(c): i for i, c in enumerate(rfc_grid.classes_)}
+            # map class label to index in xgb_grid.classes_
+            class_to_index = {int(c): i for i, c in enumerate(xgb_grid.classes_)}
             for i, pred in enumerate(predictions):
                 class_idx = class_to_index.get(int(pred), None)
                 if class_idx is None:
@@ -749,7 +749,7 @@ def model_training_evaluation():
     models_summary = {
         'Model': ['Logistic Regression', 'KNN', 'Gaussian NB', 'Decision Tree', 'Random Forest', 'XGBoost', 'Deep Learning'],
         'Accuracy': [logreg_grid_score, knn_grid_score, gb_grid_score, 0, rfc_grid_score, xgb_grid_score, dl_test_score],
-        'Top_Feature': ['N/A', 'N/A', 'N/A', 'N/A', importance_df.iloc[0]['feature'], 'N/A', 'N/A']
+        'Top_Feature': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A', importance_df.iloc[0]['feature'], 'N/A']
     }
 
     summary_df = pd.DataFrame(models_summary)
