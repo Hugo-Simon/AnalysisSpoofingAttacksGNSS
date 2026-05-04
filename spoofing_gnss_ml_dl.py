@@ -142,8 +142,8 @@ Ejemplos de uso:
         '--split',
         type=str,
         choices=['chronological', 'random'],
-        default='chronological',
-        help='Método de split train/test: chronological (primeros 80%% / últimos 20%% por clase) o random (aleatorio estratificado). Default: chronological'
+        default='random',
+        help='Método de split train/test: chronological (primeros 80%% / últimos 20%% por clase) o random (aleatorio estratificado). Default: random'
     )
 
     return parser.parse_args()
@@ -494,7 +494,7 @@ def split_train_test(X, y, method='chronological', test_size=0.2, random_state=4
     return X_train_raw, X_test_raw, y_train, y_test
 
 
-def model_training_evaluation(split_method='chronological'):
+def model_training_evaluation(split_method='random'):
     X = df.drop(columns=['attack_type'])
     y = df['attack_type']
 
@@ -855,7 +855,7 @@ if __name__ == '__main__':
 else:
     # Si se importa como módulo, usar el archivo por defecto
     filename = 'gnss_log_2025_11_22_17_18_54_spoofed_features.csv'
-    SPLIT_METHOD = 'chronological'
+    SPLIT_METHOD = 'random'
 
 # Cargar datos
 df = load_data(filename)
