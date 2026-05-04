@@ -470,6 +470,42 @@ def model_training_evaluation():
     X_train = scaler.fit_transform(X_train_raw)
     X_test  = scaler.transform(X_test_raw)
 
+    # ===============================================
+    # ANÁLISIS DE DISTRIBUTION SHIFT POR CLASE
+    # ===============================================
+    print("\n" + "="*60)
+    print("DISTRIBUTION SHIFT: media y std por clase y periodo")
+    print("="*60)
+
+    segments = {
+        'attack_type=0  TRAIN (80% inicial)': X.loc[idx_0[:split_0]],
+        'attack_type=0  TEST  (20% final)  ': X.loc[idx_0[split_0:]],
+        'attack_type=1  TRAIN (80% inicial)': X.loc[idx_1[:split_1]],
+        'attack_type=1  TEST  (20% final)  ': X.loc[idx_1[split_1:]],
+    }
+
+    stats = {}
+    for label, seg in segments.items():
+        stats[label] = pd.DataFrame({'mean': seg.mean(), 'std': seg.std()})
+
+    for label, st in stats.items():
+        print(f"\n--- {label} (n={len(X.loc[list(segments[label].index)])}) ---")
+        print(st.to_string())
+
+    # Diferencia relativa entre train y test para cada clase
+    print("\n--- Δ relativo |mean_test - mean_train| / |mean_train| por clase ---")
+    for cls, train_key, test_key in [
+        (0, 'attack_type=0  TRAIN (80% inicial)', 'attack_type=0  TEST  (20% final)  '),
+        (1, 'attack_type=1  TRAIN (80% inicial)', 'attack_type=1  TEST  (20% final)  '),
+    ]:
+        mean_train = stats[train_key]['mean']
+        mean_test  = stats[test_key]['mean']
+        delta = ((mean_test - mean_train).abs() / (mean_train.abs() + 1e-9) * 100).round(1)
+        print(f"\nattack_type={cls}:")
+        print(delta.sort_values(ascending=False).to_string())
+
+    print("="*60 + "\n")
+
     # Count original samples
     original_count = len(y)
 
