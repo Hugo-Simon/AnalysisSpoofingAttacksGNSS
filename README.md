@@ -38,6 +38,9 @@ python.exe merge_csv.py --skip 110000 -o trackData_gpsl1_ds8_16_merge.csv tracki
 python.exe columns_selection.py trackData_gpsl1_ds8_16_merge.csv
 python.exe spoofing_gnss_ml_dl.py -i trackData_gpsl1_ds8_16_merge_ml.csv --prefix ds8_16_
 
+# Con split
+python.exe spoofing_gnss_ml_dl.py -i trackData_gpsl1_ds8_16_merge_ml.csv --prefix ds8_16_ --split chronological
+
 # Otro
 python.exe add_attack_type.py -o tracking_gpsl1_16_cleanStatic_ml.csv ..\Matlab\cleanStatic\tracking_gpsl1_16.csv 0
 python.exe add_attack_type.py -o tracking_gpsl1_ds3_16_ml.csv ..\Matlab\ds3\tracking_gpsl1_16.csv 1
