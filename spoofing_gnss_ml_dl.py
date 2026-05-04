@@ -13,7 +13,6 @@ from collections import Counter
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import confusion_matrix
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
-from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, StratifiedShuffleSplit
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
@@ -447,50 +446,30 @@ def plot_total_samples(original_count, ros_count, rus_count, smote_count):
     # plt.show()
 
 def model_training_evaluation():
-    # Assuming df is your DataFrame containing the dataset
     X = df.drop(columns=['attack_type'])
-    y = df.attack_type
+    y = df['attack_type']
+
+    # Split temporal por clase: primeros 80% train, últimos 20% test
+    idx_0 = df.index[df['attack_type'] == 0].tolist()
+    idx_1 = df.index[df['attack_type'] == 1].tolist()
+
+    split_0 = int(len(idx_0) * 0.8)
+    split_1 = int(len(idx_1) * 0.8)
+
+    train_idx = idx_0[:split_0] + idx_1[:split_1]
+    test_idx  = idx_0[split_0:] + idx_1[split_1:]
+
+    X_train_raw = X.loc[train_idx]
+    X_test_raw  = X.loc[test_idx]
+    y_train = y.loc[train_idx].reset_index(drop=True)
+    y_test  = y.loc[test_idx].reset_index(drop=True)
+
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-
-    # Train test split
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled,
-                                                        y,
-                                                        test_size=0.2,
-                                                        random_state=42)
-
+    X_train = scaler.fit_transform(X_train_raw)
+    X_test  = scaler.transform(X_test_raw)
 
     # Count original samples
     original_count = len(y)
-
-    # Function to apply balancing technique and print results
-    def apply_balancing(X, y, technique, technique_name):
-        X_resampled, y_resampled = technique.fit_resample(X, y)
-        print(f"\n{technique_name} class distribution:", Counter(y_resampled))
-        return X_resampled, y_resampled
-
-    X = df.drop(columns=['attack_type'])
-    y = df.attack_type
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-    # Train test split
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled,
-                                                        y,
-                                                        test_size=0.2,
-                                                        random_state=42)
-
-    # Usar el dataset original sin balanceo
-    X = df.drop(columns=['attack_type'])
-    y = df.attack_type
-
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-
-    # Train test split con datos originales (sin balanceo)
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled,
-                                                        y,
-                                                        test_size=0.2,
-                                                        random_state=42)
 
     # Print the shapes of each split
     print("Shapes of the splits:")
@@ -500,7 +479,7 @@ def model_training_evaluation():
     print(f"y_test shape: {y_test.shape}")
 
     # Print the total number of samples
-    total_samples = len(X_scaled)
+    total_samples = len(X)
     print(f"\nTotal number of samples: {total_samples}")
 
     # Print the number of samples in each split
