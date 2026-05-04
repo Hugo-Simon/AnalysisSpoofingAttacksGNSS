@@ -547,7 +547,7 @@ def model_training_evaluation():
 
     # ## **`2. K-Nearest Neighbor (KNN)`**
     params = {
-        'n_neighbors': [9,11,13,15,17,19],
+        'n_neighbors': [11,13,15,17,19,21,23],
         'weights': ['uniform','distance']}
 
     knn_grid_score, knn_grid, y_pred, cm = run_knn(X_train, y_train, X_test, y_test, cv=cv, params=params, output_prefix='knn')
@@ -587,7 +587,8 @@ def model_training_evaluation():
         ####'max_depth': range (2, 10, 1),
         'max_depth': range (2, 14, 1),  # 14 numero de ramas
         'n_estimators': range(60, 220, 40),
-        'learning_rate': [0.1, 0.01, 0.05]
+        ##'learning_rate': [0.1, 0.01, 0.05]
+        'learning_rate': [0.3, 0.03, 0.1]
     }
 
     # Use helper to train and evaluate XGBoost
