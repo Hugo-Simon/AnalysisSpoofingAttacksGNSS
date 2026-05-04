@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /d/Proyectos/AnalysisSpoofingAttacksGNSS -type f -name README* -o -name CLAUDE* -o -name .cursorrules -o -name package.json -o -name Makefile -o -name pyproject.toml -o -name setup.py -o -name pom.xml)"
+    ]
+  }
+}
