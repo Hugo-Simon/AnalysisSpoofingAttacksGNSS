@@ -138,7 +138,13 @@ Ejemplos de uso:
         default='',
         help='Prefijo opcional para todos los ficheros de salida (ej: v1_)'
     )
-    # Add other arguments here as needed (e.g., model selection, output paths)
+    parser.add_argument(
+        '--split',
+        type=str,
+        choices=['chronological', 'random'],
+        default='chronological',
+        help='Método de split train/test: chronological (primeros 80%% / últimos 20%% por clase) o random (aleatorio estratificado). Default: chronological'
+    )
 
     return parser.parse_args()
 
@@ -447,24 +453,52 @@ def plot_total_samples(original_count, ros_count, rus_count, smote_count):
     plt.savefig(add_prefix("total_samples_comparison.png", OUTPUT_PREFIX), dpi=300, bbox_inches='tight')  # Save at 300 DPI
     # plt.show()
 
-def model_training_evaluation():
+def split_train_test(X, y, method='chronological', test_size=0.2, random_state=42):
+    """Divide X e y en train/test según el método indicado.
+
+    - 'chronological': primeros (1-test_size) de cada clase → train,
+                       últimos test_size → test (respeta orden temporal).
+    - 'random':        split aleatorio estratificado por clase.
+
+    Devuelve X_train_raw, X_test_raw, y_train, y_test (índices reseteados).
+    """
+    if method == 'chronological':
+        idx_0 = df.index[y == 0].tolist()
+        idx_1 = df.index[y == 1].tolist()
+
+        split_0 = int(len(idx_0) * (1 - test_size))
+        split_1 = int(len(idx_1) * (1 - test_size))
+
+        train_idx = idx_0[:split_0] + idx_1[:split_1]
+        test_idx  = idx_0[split_0:] + idx_1[split_1:]
+
+        X_train_raw = X.loc[train_idx]
+        X_test_raw  = X.loc[test_idx]
+        y_train = y.loc[train_idx].reset_index(drop=True)
+        y_test  = y.loc[test_idx].reset_index(drop=True)
+
+    else:  # random
+        from sklearn.model_selection import StratifiedShuffleSplit
+        sss = StratifiedShuffleSplit(n_splits=1, test_size=test_size, random_state=random_state)
+        train_idx, test_idx = next(sss.split(X, y))
+
+        X_train_raw = X.iloc[train_idx]
+        X_test_raw  = X.iloc[test_idx]
+        y_train = y.iloc[train_idx].reset_index(drop=True)
+        y_test  = y.iloc[test_idx].reset_index(drop=True)
+
+    print(f"\nMétodo de split: [{method}]")
+    print(f"  Train: {len(y_train)} muestras  {dict(y_train.value_counts().sort_index())}")
+    print(f"  Test:  {len(y_test)} muestras  {dict(y_test.value_counts().sort_index())}")
+
+    return X_train_raw, X_test_raw, y_train, y_test
+
+
+def model_training_evaluation(split_method='chronological'):
     X = df.drop(columns=['attack_type'])
     y = df['attack_type']
 
-    # Split temporal por clase: primeros 80% train, últimos 20% test
-    idx_0 = df.index[df['attack_type'] == 0].tolist()
-    idx_1 = df.index[df['attack_type'] == 1].tolist()
-
-    split_0 = int(len(idx_0) * 0.8)
-    split_1 = int(len(idx_1) * 0.8)
-
-    train_idx = idx_0[:split_0] + idx_1[:split_1]
-    test_idx  = idx_0[split_0:] + idx_1[split_1:]
-
-    X_train_raw = X.loc[train_idx]
-    X_test_raw  = X.loc[test_idx]
-    y_train = y.loc[train_idx].reset_index(drop=True)
-    y_test  = y.loc[test_idx].reset_index(drop=True)
+    X_train_raw, X_test_raw, y_train, y_test = split_train_test(X, y, method=split_method)
 
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train_raw)
@@ -477,26 +511,30 @@ def model_training_evaluation():
     print("DISTRIBUTION SHIFT: media y std por clase y periodo")
     print("="*60)
 
+    train_df = X_train_raw.copy()
+    train_df['_label'] = y_train.values
+    test_df  = X_test_raw.copy()
+    test_df['_label'] = y_test.values
+
+    feature_cols = X.columns.tolist()
     segments = {
-        'attack_type=0  TRAIN (80% inicial)': X.loc[idx_0[:split_0]],
-        'attack_type=0  TEST  (20% final)  ': X.loc[idx_0[split_0:]],
-        'attack_type=1  TRAIN (80% inicial)': X.loc[idx_1[:split_1]],
-        'attack_type=1  TEST  (20% final)  ': X.loc[idx_1[split_1:]],
+        'attack_type=0  TRAIN': train_df[train_df['_label'] == 0][feature_cols],
+        'attack_type=0  TEST ': test_df[test_df['_label']   == 0][feature_cols],
+        'attack_type=1  TRAIN': train_df[train_df['_label'] == 1][feature_cols],
+        'attack_type=1  TEST ': test_df[test_df['_label']   == 1][feature_cols],
     }
 
     stats = {}
     for label, seg in segments.items():
         stats[label] = pd.DataFrame({'mean': seg.mean(), 'std': seg.std()})
-
-    for label, st in stats.items():
-        print(f"\n--- {label} (n={len(X.loc[list(segments[label].index)])}) ---")
-        print(st.to_string())
+        print(f"\n--- {label} (n={len(seg)}) ---")
+        print(stats[label].to_string())
 
     # Diferencia relativa entre train y test para cada clase
     print("\n--- Δ relativo |mean_test - mean_train| / |mean_train| por clase ---")
     for cls, train_key, test_key in [
-        (0, 'attack_type=0  TRAIN (80% inicial)', 'attack_type=0  TEST  (20% final)  '),
-        (1, 'attack_type=1  TRAIN (80% inicial)', 'attack_type=1  TEST  (20% final)  '),
+        (0, 'attack_type=0  TRAIN', 'attack_type=0  TEST '),
+        (1, 'attack_type=1  TRAIN', 'attack_type=1  TEST '),
     ]:
         mean_train = stats[train_key]['mean']
         mean_test  = stats[test_key]['mean']
@@ -800,6 +838,7 @@ if __name__ == '__main__':
     # Parsear argumentos de línea de comandos
     args = parse_arguments()
     OUTPUT_PREFIX = args.prefix or ''
+    SPLIT_METHOD = args.split
     # Support both `--file` (older) and `--input` (`-i`) argument names for backwards compatibility
     filename = getattr(args, 'file', None) or getattr(args, 'input', None)
     # Enforce that filename is provided (argparse 'required' should handle this),
@@ -816,6 +855,7 @@ if __name__ == '__main__':
 else:
     # Si se importa como módulo, usar el archivo por defecto
     filename = 'gnss_log_2025_11_22_17_18_54_spoofed_features.csv'
+    SPLIT_METHOD = 'chronological'
 
 # Cargar datos
 df = load_data(filename)
@@ -846,4 +886,4 @@ df.info()
 print(df.shape)
 df.isnull().sum()
 
-model_training_evaluation()
+model_training_evaluation(split_method=SPLIT_METHOD)
