@@ -87,10 +87,10 @@ def plot_confusion_matrix_percent(cm, labels=None, filename=None, normalize='tru
                 annot[i, j] = f"{count}"
 
     plt.figure(figsize=(6 + 0.5 * len(labels), 5))
-    sns.heatmap(cm, annot=annot, fmt='', cmap=cmap, xticklabels=labels, yticklabels=labels, cbar_kws={'label': 'Count'})
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-    plt.title('Confusion Matrix (counts and %)' )
+    sns.heatmap(cm, annot=annot, fmt='', cmap=cmap, xticklabels=labels, yticklabels=labels, cbar_kws={'label': 'Muestras'})
+    plt.ylabel('Valores')
+    plt.xlabel('Predicción')
+    plt.title('Matriz de Aciertos (muestras y %)' )
     plt.tight_layout()
     if filename:
         plt.savefig(add_prefix(filename, OUTPUT_PREFIX), dpi=300, bbox_inches='tight')
